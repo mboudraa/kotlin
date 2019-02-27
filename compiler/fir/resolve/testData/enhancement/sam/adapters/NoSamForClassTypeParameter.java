@@ -1,15 +1,15 @@
 package test;
 
-class NoSamForTypeParameter<K extends Runnable> {
+class NoSamForClassTypeParameter<K extends Runnable> {
     void foo(K runnable1, Runnable runnable2) {}
 }
 
-class NoSamForTypeParameterDerived1 extends NoSamForTypeParameter<Runnable> {
+class NoSamForTypeParameterDerived1 extends NoSamForClassTypeParameter<Runnable> {
     @Override
     void foo(Runnable runnable1, Runnable runnable2) {}
 }
 
-class NoSamForTypeParameterDerived2<E extends Runnable> extends NoSamForTypeParameter<E> {
+class NoSamForTypeParameterDerived2<E extends Runnable> extends NoSamForClassTypeParameter<E> {
      void foo(E runnable1, Runnable runnable2) {}
 }
 

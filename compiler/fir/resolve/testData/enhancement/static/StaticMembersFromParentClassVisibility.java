@@ -7,5 +7,5 @@ class Parent {
     public static int public_ = 4;
 }
 
-class Child extends Parent {
+class StaticMembersFromParentClassVisibility extends Parent {
 }

@@ -10,7 +10,7 @@ interface Parent2 {
     public static int e = 2;
 }
 
-enum StaticMembersInEnum implements Parent1, Parent2 {
+enum StaticMembersInEnumFromParents implements Parent1, Parent2 {
     ENTRY;
 
     public static int b = 3;

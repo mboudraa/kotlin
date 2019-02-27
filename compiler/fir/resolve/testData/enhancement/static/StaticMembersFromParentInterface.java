@@ -10,7 +10,7 @@ interface Parent2 {
     public static int e = 2;
 }
 
-class Child implements Parent1, Parent2 {
+class StaticMembersFromParentInterface implements Parent1, Parent2 {
     public static String b = "3";
     public static int c = 4;
     public static String d = "4";

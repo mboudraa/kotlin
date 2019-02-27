@@ -4,7 +4,7 @@ package test;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
-class AnnotatedParameterInInnerClassConstructor {
+class AnnotatedTypeInEnumClassConstructor {
 
     @Target({ElementType.TYPE_USE, ElementType.PARAMETER})
     public @interface Anno {

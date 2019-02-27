@@ -10,17 +10,16 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightVirtualFile
-import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
-import org.jetbrains.kotlin.fir.AbstractFirResolveWithSessionTestCase
 import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.createSession
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
@@ -36,6 +35,7 @@ import org.jetbrains.kotlin.fir.service
 import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.test.ConfigurationKind
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils.getAnnotationsJar
@@ -120,18 +120,15 @@ abstract class AbstractFirTypeEnhancementTest : KtUsefulTestCase() {
             }
         }
         val factory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
-        val psiFiles = virtualFiles.map { factory.trySetupPsiForFile(it, JavaLanguage.INSTANCE, true, false)!! }
+        val psiFile = virtualFiles.map { factory.trySetupPsiForFile(it, JavaLanguage.INSTANCE, true, false)!! }.first()
 
         val scope = GlobalSearchScope.filesScope(project, virtualFiles)
             .uniteWith(TopDownAnalyzerFacadeForJVM.AllJavaSourcesInProjectScope(project))
         val session = createSession(project, scope)
-        //environment.createPackagePartProvider(scope)
 
-        val classFqNames = listOf("class ", "interface ", "enum ", "@interface ").map { kind ->
-            javaLines
-                .filter { !it.startsWith(" ") && it.contains(kind) }
-                .map { suffix -> suffix.substringAfter(kind).trim().substringBefore(" ").substringBefore("<").let { FqName(it) } }
-        }.flatten().toSet()
+        val classFqNames = psiFile.getChildrenOfType<PsiClass>()
+            .filter { it.name == javaFile.nameWithoutExtension }
+            .map { FqName(it.name!!) }
 
         val javaFirDump = StringBuilder().also { builder ->
             val renderer = FirRenderer(builder)

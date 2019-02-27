@@ -1,6 +1,6 @@
 package test;
 
-class AnnotatedParameterInInnerClassConstructor {
+class AnnotatedParameterInEnumClassConstructor {
 
     public @interface Anno {
         String value();
