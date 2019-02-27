@@ -183,6 +183,13 @@ class MethodInliner(
                     )
 
                     val transformResult = transformer.doTransform(nodeRemapper)
+                    if (transformResult == null) {
+                        remapper.removeMapping(oldClassName)
+                        if (!transformationInfo!!.wasAlreadyRegenerated) {
+                            result.addNotChangedClass(oldClassName)
+                        }
+                        return
+                    }
                     result.merge(transformResult)
                     result.addChangedType(oldClassName, newClassName)
 

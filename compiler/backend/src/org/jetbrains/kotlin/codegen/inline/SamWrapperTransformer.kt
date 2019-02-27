@@ -55,7 +55,7 @@ class SamWrapperTransformationInfo(
 class SamWrapperTransformer(transformationInfo: SamWrapperTransformationInfo, private val inliningContext: InliningContext) :
     ObjectTransformer<SamWrapperTransformationInfo>(transformationInfo, inliningContext.state) {
 
-    override fun doTransform(parentRemapper: FieldRemapper): InlineResult {
+    override fun doTransform(parentRemapper: FieldRemapper): InlineResult? {
         val classReader = createClassReader()
         val classBuilder = createRemappingClassBuilderViaFactory(inliningContext)
 

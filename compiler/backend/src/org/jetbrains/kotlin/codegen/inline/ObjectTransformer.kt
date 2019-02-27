@@ -28,7 +28,7 @@ import org.jetbrains.org.objectweb.asm.tree.MethodNode
 
 abstract class ObjectTransformer<out T : TransformationInfo>(@JvmField val transformationInfo: T, val state: GenerationState) {
 
-    abstract fun doTransform(parentRemapper: FieldRemapper): InlineResult
+    abstract fun doTransform(parentRemapper: FieldRemapper): InlineResult?
 
     @JvmField
     protected val transformationResult = InlineResult.create()
@@ -56,7 +56,7 @@ class WhenMappingTransformer(
     private val inliningContext: InliningContext
 ) : ObjectTransformer<WhenMappingTransformationInfo>(whenObjectRegenerationInfo, inliningContext.state) {
 
-    override fun doTransform(parentRemapper: FieldRemapper): InlineResult {
+    override fun doTransform(parentRemapper: FieldRemapper): InlineResult? {
         val classReader = createClassReader()
         //TODO add additional check that class is when mapping
 

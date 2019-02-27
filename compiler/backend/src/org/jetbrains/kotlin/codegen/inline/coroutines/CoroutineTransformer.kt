@@ -25,7 +25,7 @@ import org.jetbrains.org.objectweb.asm.tree.TypeInsnNode
 
 class CoroutineTransformer(
     private val inliningContext: InliningContext,
-    private val classBuilder: ClassBuilder,
+    private val classBuilder: () -> ClassBuilder,
     private val sourceFile: String?,
     private val methods: List<MethodNode>,
     private val superClassName: String
@@ -47,6 +47,10 @@ class CoroutineTransformer(
             else -> false
         }
     }
+
+    fun isNotSuspendLambdaToTransform(transformationInfo: AnonymousObjectTransformationInfo): Boolean =
+        transformationInfo.isSuspendLambdaThatMustBeRegenerated &&
+                (isContinuationNotLambda() || methods.none { isSuspendLambda(it) })
 
     private fun isContinuationNotLambda(): Boolean = inliningContext.isContinuation &&
             if (state.languageVersionSettings.isReleaseCoroutines()) superClassName.endsWith("ContinuationImpl")
@@ -94,7 +98,7 @@ class CoroutineTransformer(
             )
         ) {
             CoroutineTransformerMethodVisitor(
-                classBuilder.newMethod(
+                classBuilder().newMethod(
                     JvmDeclarationOrigin.NO_ORIGIN,
                     node.access,
                     node.name,
@@ -102,12 +106,12 @@ class CoroutineTransformer(
                     node.signature,
                     ArrayUtil.toStringArray(node.exceptions)
                 ), node.access, node.name, node.desc, null, null,
-                obtainClassBuilderForCoroutineState = { classBuilder },
+                obtainClassBuilderForCoroutineState = classBuilder,
                 element = element,
                 diagnostics = state.diagnostics,
                 languageVersionSettings = state.languageVersionSettings,
                 shouldPreserveClassInitialization = state.constructorCallNormalizationMode.shouldPreserveClassInitialization,
-                containingClassInternalName = classBuilder.thisName,
+                containingClassInternalName = classBuilder().thisName,
                 isForNamedFunction = false,
                 sourceFile = sourceFile ?: "",
                 isCrossinlineLambda = inliningContext.isContinuation
@@ -125,7 +129,7 @@ class CoroutineTransformer(
             )
         ) {
             CoroutineTransformerMethodVisitor(
-                classBuilder.newMethod(
+                classBuilder().newMethod(
                     JvmDeclarationOrigin.NO_ORIGIN, node.access, node.name, node.desc, node.signature,
                     ArrayUtil.toStringArray(node.exceptions)
                 ), node.access, node.name, node.desc, null, null,
@@ -134,10 +138,10 @@ class CoroutineTransformer(
                 diagnostics = state.diagnostics,
                 languageVersionSettings = state.languageVersionSettings,
                 shouldPreserveClassInitialization = state.constructorCallNormalizationMode.shouldPreserveClassInitialization,
-                containingClassInternalName = classBuilder.thisName,
+                containingClassInternalName = classBuilder().thisName,
                 isForNamedFunction = true,
                 needDispatchReceiver = true,
-                internalNameForDispatchReceiver = classBuilder.thisName,
+                internalNameForDispatchReceiver = classBuilder().thisName,
                 sourceFile = sourceFile ?: ""
             )
         }
@@ -152,7 +156,7 @@ class CoroutineTransformer(
 
     fun registerClassBuilder(continuationClassName: String) {
         val context = inliningContext.parent?.parent as? RegeneratedClassContext ?: error("incorrect context")
-        context.continuationBuilders[continuationClassName] = classBuilder
+        context.continuationBuilders[continuationClassName] = classBuilder()
     }
 
     fun unregisterClassBuilder(continuationClassName: String) =

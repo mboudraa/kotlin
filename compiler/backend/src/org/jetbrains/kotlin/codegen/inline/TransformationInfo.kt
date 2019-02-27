@@ -74,7 +74,7 @@ class AnonymousObjectTransformationInfo internal constructor(
     private val isStaticOrigin: Boolean,
     parentNameGenerator: NameGenerator,
     private val capturesAnonymousObjectThatMustBeRegenerated: Boolean = false,
-    private val isSuspendLambdaThatMustBeRegenerated: Boolean = false
+    var isSuspendLambdaThatMustBeRegenerated: Boolean = false
 ) : TransformationInfo {
 
     override val nameGenerator by lazy {

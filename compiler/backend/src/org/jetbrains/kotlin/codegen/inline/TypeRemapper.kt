@@ -33,6 +33,10 @@ class TypeRemapper private constructor(
         typeMapping.put(type, newType)
     }
 
+    internal fun removeMapping(type: String) {
+        typeMapping.remove(type)
+    }
+
     fun hasNoAdditionalMapping(type: String): Boolean {
         return typeMapping.containsKey(type)
     }

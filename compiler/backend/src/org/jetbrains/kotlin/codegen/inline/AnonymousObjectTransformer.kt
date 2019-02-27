@@ -42,16 +42,18 @@ class AnonymousObjectTransformer(
     private lateinit var sourceMapper: SourceMapper
     private val languageVersionSettings = inliningContext.state.languageVersionSettings
 
-    override fun doTransform(parentRemapper: FieldRemapper): InlineResult {
+    override fun doTransform(parentRemapper: FieldRemapper): InlineResult? {
         val innerClassNodes = ArrayList<InnerClassNode>()
-        val classBuilder = createRemappingClassBuilderViaFactory(inliningContext)
         val methodsToTransform = ArrayList<MethodNode>()
         val metadataReader = ReadKotlinClassHeaderAnnotationVisitor()
         lateinit var superClassName: String
 
-        createClassReader().accept(object : ClassVisitor(Opcodes.API_VERSION, classBuilder.visitor) {
+        val classNode = ClassNode(Opcodes.API_VERSION)
+
+        createClassReader().accept(classNode, ClassReader.SKIP_FRAMES)
+
+        classNode.accept(object : ClassVisitor(Opcodes.API_VERSION) {
             override fun visit(version: Int, access: Int, name: String, signature: String?, superName: String, interfaces: Array<String>) {
-                classBuilder.defineClass(null, version, access, name, signature, superName, interfaces)
                 if (languageVersionSettings.isCoroutineSuperClass(superName)) {
                     inliningContext.isContinuation = true
                 }
@@ -88,6 +90,38 @@ class AnonymousObjectTransformer(
 
             override fun visitField(access: Int, name: String, desc: String, signature: String?, value: Any?): FieldVisitor? {
                 addUniqueField(name)
+                return super.visitField(access, name, desc, signature, value)
+            }
+
+            override fun visitSource(source: String, debug: String?) {
+                sourceInfo = source
+                debugInfo = debug
+            }
+        })
+
+        lateinit var classBuilder: ClassBuilder
+
+        val coroutineTransformer = CoroutineTransformer(
+            inliningContext,
+            { classBuilder },
+            sourceInfo,
+            methodsToTransform,
+            superClassName
+        )
+        if (coroutineTransformer.isNotSuspendLambdaToTransform(transformationInfo)) {
+            transformationInfo.isSuspendLambdaThatMustBeRegenerated = false
+            if (!transformationInfo.shouldRegenerate(isSameModule)) {
+                return null
+            }
+        }
+
+        classBuilder = createRemappingClassBuilderViaFactory(inliningContext)
+        classNode.accept(object : ClassVisitor(Opcodes.API_VERSION, classBuilder.visitor) {
+            override fun visit(version: Int, access: Int, name: String, signature: String?, superName: String, interfaces: Array<String>) {
+                classBuilder.defineClass(null, version, access, name, signature, superName, interfaces)
+            }
+
+            override fun visitField(access: Int, name: String, desc: String, signature: String?, value: Any?): FieldVisitor? {
                 return if (isCapturedFieldName(name)) {
                     null
                 } else {
@@ -95,13 +129,18 @@ class AnonymousObjectTransformer(
                 }
             }
 
-            override fun visitSource(source: String, debug: String?) {
-                sourceInfo = source
-                debugInfo = debug
-            }
+            override fun visitMethod(
+                access: Int,
+                name: String?,
+                descriptor: String?,
+                signature: String?,
+                exceptions: Array<out String>?
+            ): MethodVisitor? = null
+
+            override fun visitInnerClass(name: String, outerName: String?, innerName: String?, access: Int) {}
 
             override fun visitEnd() {}
-        }, ClassReader.SKIP_FRAMES)
+        })
 
         if (!inliningContext.isInliningLambda) {
             sourceMapper = if (debugInfo != null && !debugInfo!!.isEmpty()) {
@@ -130,13 +169,6 @@ class AnonymousObjectTransformer(
 
         generateConstructorAndFields(classBuilder, allCapturedParamBuilder, constructorParamBuilder, parentRemapper, additionalFakeParams)
 
-        val coroutineTransformer = CoroutineTransformer(
-            inliningContext,
-            classBuilder,
-            sourceInfo,
-            methodsToTransform,
-            superClassName
-        )
         for (next in methodsToTransform) {
             val deferringVisitor =
                 when {
