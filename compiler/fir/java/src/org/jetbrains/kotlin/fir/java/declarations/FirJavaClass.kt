@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.impl.FirAbstractMemberDeclaration
 import org.jetbrains.kotlin.fir.declarations.impl.FirModifiableClass
+import org.jetbrains.kotlin.fir.java.scopes.JavaClassEnhancementScope
 import org.jetbrains.kotlin.fir.java.scopes.JavaClassUseSiteScope
 import org.jetbrains.kotlin.fir.resolve.lookupSuperTypes
 import org.jetbrains.kotlin.fir.scopes.impl.FirClassDeclaredMemberScope
@@ -51,18 +52,18 @@ class FirJavaClass(
     override val declarations = mutableListOf<FirDeclaration>()
 
     private fun FirRegularClass.buildUseSiteScope(useSiteSession: FirSession = session): JavaClassUseSiteScope {
-        val superTypeScope = FirCompositeScope(mutableListOf())
+        val superTypeEnhancementScope = FirCompositeScope(mutableListOf())
         val declaredScope = FirClassDeclaredMemberScope(this, useSiteSession)
         lookupSuperTypes(this, lookupInterfaces = true, deep = false, useSiteSession = useSiteSession)
-            .mapNotNullTo(superTypeScope.scopes) { useSiteSuperType ->
+            .mapNotNullTo(superTypeEnhancementScope.scopes) { useSiteSuperType ->
                 if (useSiteSuperType is ConeClassErrorType) return@mapNotNullTo null
                 val symbol = useSiteSuperType.symbol
                 if (symbol is FirClassSymbol) {
-                    symbol.fir.buildUseSiteScope(useSiteSession)
+                    JavaClassEnhancementScope(useSiteSession, symbol.fir.buildUseSiteScope(useSiteSession))
                 } else {
                     null
                 }
             }
-        return JavaClassUseSiteScope(this, useSiteSession, superTypeScope, declaredScope)
+        return JavaClassUseSiteScope(this, useSiteSession, superTypeEnhancementScope, declaredScope)
     }
 }
