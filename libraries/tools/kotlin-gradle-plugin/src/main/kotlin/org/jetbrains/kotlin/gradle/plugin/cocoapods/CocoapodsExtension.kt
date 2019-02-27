@@ -9,7 +9,6 @@ import org.gradle.api.Named
 import org.gradle.api.NamedDomainObjectSet
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
@@ -39,11 +38,9 @@ open class CocoapodsExtension(
 
     private val pods_ = project.container(CocoapodsDependency::class.java)
 
-    @get:Nested
+    @get:Input
     val pods: NamedDomainObjectSet<CocoapodsDependency>
         get() = pods_
-
-    // TODO: Interop conifguration.
 
     @JvmOverloads
     fun pod(name: String, version: String? = null, moduleName: String = name) {
@@ -53,10 +50,9 @@ open class CocoapodsExtension(
 
     data class CocoapodsDependency(
         private val name: String,
-        @Optional @Input val version: String?,
-        @Input val moduleName: String
-    ): Named {
-        @Input
+        val version: String?,
+        val moduleName: String
+    ) : Named, java.io.Serializable {
         override fun getName(): String = name
     }
 

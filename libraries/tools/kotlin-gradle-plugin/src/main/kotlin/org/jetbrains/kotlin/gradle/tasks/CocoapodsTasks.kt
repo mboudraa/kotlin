@@ -25,10 +25,8 @@ open class PodspecTask: DefaultTask() {
     lateinit var settings: CocoapodsExtension
 
     // TODO: Framework name customization.
-    // TODO: Update compiler version to be able to build static frameworks
-    // TODO: UP-TO-DATE check is incorrect if pods changed
     // TODO: Generate defs in a separate task.
-    // TODO: Move the taret mapping in a separate class.
+    // TODO: Move the target mapping in a separate class.
     // TODO: Do we need preserve_path_patterns?
     @TaskAction
     fun generate() {
