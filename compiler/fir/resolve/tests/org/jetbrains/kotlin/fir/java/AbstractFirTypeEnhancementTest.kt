@@ -5,11 +5,24 @@
 
 package org.jetbrains.kotlin.fir.java
 
+import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.psi.PsiElementFinder
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.LightVirtualFile
+import junit.framework.TestCase
+import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
+import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
 import org.jetbrains.kotlin.fir.AbstractFirResolveWithSessionTestCase
 import org.jetbrains.kotlin.fir.FirRenderer
+import org.jetbrains.kotlin.fir.createSession
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaClass
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaMethod
@@ -25,24 +38,95 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.test.ConfigurationKind
 import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.test.KotlinTestUtils.getAnnotationsJar
+import org.jetbrains.kotlin.test.KotlinTestUtils.newConfiguration
+import org.jetbrains.kotlin.test.TestJdkKind
+import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase
 import java.io.File
+import java.io.IOException
 
-abstract class AbstractFirTypeEnhancementTest : AbstractFirResolveWithSessionTestCase() {
-    override fun createEnvironment(): KotlinCoreEnvironment {
-        return createEnvironmentWithMockJdk(ConfigurationKind.JDK_NO_RUNTIME)
+abstract class AbstractFirTypeEnhancementTest : KtUsefulTestCase() {
+    private lateinit var javaFilesDir: File
+
+    private lateinit var environment: KotlinCoreEnvironment
+
+    val project: Project
+        get() {
+            return environment.project
+        }
+
+    @Throws(Exception::class)
+    override fun setUp() {
+        super.setUp()
+        javaFilesDir = KotlinTestUtils.tmpDirForTest(this)
+    }
+
+    override fun tearDown() {
+        FileUtil.delete(javaFilesDir)
+        super.tearDown()
+    }
+
+    private fun createEnvironment(): KotlinCoreEnvironment {
+        return KotlinCoreEnvironment.createForTests(
+            testRootDisposable,
+            newConfiguration(
+                ConfigurationKind.JDK_NO_RUNTIME, TestJdkKind.FULL_JDK, listOf(getAnnotationsJar()), listOf(javaFilesDir)
+            ),
+            EnvironmentConfigFiles.JVM_CONFIG_FILES
+        ).apply {
+            Extensions.getArea(project)
+                .getExtensionPoint(PsiElementFinder.EP_NAME)
+                .unregisterExtension(JavaElementFinder::class.java)
+        }
     }
 
     fun doTest(path: String) {
-        val scope = GlobalSearchScope.filesScope(project, emptyList())
-            .uniteWith(TopDownAnalyzerFacadeForJVM.AllJavaSourcesInProjectScope(project))
-        val session = createSession(scope)
-
         val javaFile = File(path)
         val javaLines = javaFile.readLines()
         val packageFqName =
             javaLines.firstOrNull { it.startsWith("package") }?.substringAfter("package")?.trim()?.substringBefore(";")?.let { name ->
                 FqName(name)
             } ?: FqName.ROOT
+//        LoadDescriptorUtil.compileJavaWithAnnotationsJar(listOf(javaFile), compiledDir)
+
+        val srcFiles = KotlinTestUtils.createTestFiles<Void, File>(
+            javaFile.name, FileUtil.loadFile(javaFile, true),
+            object : KotlinTestUtils.TestFileFactoryNoModules<File>() {
+                override fun create(fileName: String, text: String, directives: Map<String, String>): File {
+                    var currentDir = javaFilesDir
+                    for (segment in packageFqName.pathSegments()) {
+                        currentDir = File(currentDir, segment.asString()).apply { mkdir() }
+                    }
+                    val targetFile = File(currentDir, fileName)
+                    try {
+                        FileUtil.writeToFile(targetFile, text)
+                    } catch (e: IOException) {
+                        throw AssertionError(e)
+                    }
+
+                    return targetFile
+                }
+            }, ""
+        )
+        environment = createEnvironment()
+        val virtualFiles = srcFiles.map {
+            object : LightVirtualFile(
+                it.name, JavaLanguage.INSTANCE, StringUtilRt.convertLineSeparators(it.readText())
+            ) {
+                override fun getPath(): String {
+                    //TODO: patch LightVirtualFile
+                    return "/$name"
+                }
+            }
+        }
+        val factory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
+        val psiFiles = virtualFiles.map { factory.trySetupPsiForFile(it, JavaLanguage.INSTANCE, true, false)!! }
+
+        val scope = GlobalSearchScope.filesScope(project, virtualFiles)
+            .uniteWith(TopDownAnalyzerFacadeForJVM.AllJavaSourcesInProjectScope(project))
+        val session = createSession(project, scope)
+        //environment.createPackagePartProvider(scope)
+
         val classFqNames = listOf("class ", "interface ", "enum ", "@interface ").map { kind ->
             javaLines
                 .filter { !it.startsWith(" ") && it.contains(kind) }
@@ -54,7 +138,7 @@ abstract class AbstractFirTypeEnhancementTest : AbstractFirResolveWithSessionTes
             val symbolProvider = session.service<FirSymbolProvider>() as FirCompositeSymbolProvider
             val javaProvider = symbolProvider.providers.filterIsInstance<JavaSymbolProvider>().first()
             for (classFqName in classFqNames) {
-                javaProvider.getClassLikeSymbolByFqName(ClassId(packageFqName, classFqName, false))
+                javaProvider.getClassLikeSymbolByFqName(ClassId(packageFqName, classFqName, false))!!
             }
 
             val processedJavaClasses = mutableSetOf<FirJavaClass>()
