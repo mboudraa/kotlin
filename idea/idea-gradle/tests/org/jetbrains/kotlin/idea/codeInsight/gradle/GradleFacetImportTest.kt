@@ -90,7 +90,7 @@ class GradleFacetImportTest : GradleImportingTestCase() {
         val sdks = moduleNames.map { getModule(it).sdk!! }
         val refSdk = sdks.firstOrNull() ?: return
         Assert.assertTrue(refSdk.sdkType is KotlinSdkType)
-        Assert.assertTrue(sdks.all { it === refSdk })
+        Assert.assertTrue(sdks.all { it === refSdk })//TODO
     }
 
     @Test
@@ -1339,7 +1339,7 @@ compileTestKotlin {
                 }
 
                 dependencies {
-                    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.1.2-eap-44")
+                    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.40")
                 }
             }
 
