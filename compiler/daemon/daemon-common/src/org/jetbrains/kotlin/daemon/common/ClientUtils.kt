@@ -35,8 +35,8 @@ fun makeRunFilenameString(timestamp: String, digest: String, port: String, escap
 fun makePortFromRunFilenameExtractor(digest: String): (String) -> Int? {
     val regex = makeRunFilenameString(timestamp = "[0-9TZ:\\.\\+-]+", digest = digest, port = "(\\d+)", escapeSequence = "\\").toRegex()
     return { regex.find(it)
-             ?.groups?.get(1)
-             ?.value?.toInt()
+            ?.groups?.get(1)
+            ?.value?.toInt()
     }
 }
 

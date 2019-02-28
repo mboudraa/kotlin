@@ -33,9 +33,9 @@ import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicInteger
 
 class ReplInterpreter(
-    disposable: Disposable,
-    private val configuration: CompilerConfiguration,
-    private val replConfiguration: ReplConfiguration
+        disposable: Disposable,
+        private val configuration: CompilerConfiguration,
+        private val replConfiguration: ReplConfiguration
 ) {
     private val lineNumber = AtomicInteger()
 
@@ -94,12 +94,12 @@ class ReplInterpreter(
 
         try {
             val evalRes = scriptEvaluator.compileAndEval(
-                evalState,
-                ReplCodeLine(lineNumber.getAndIncrement(), 0, fullText),
-                null,
-                object : InvokeWrapper {
-                    override fun <T> invoke(body: () -> T): T = replConfiguration.executionInterceptor.execute(body)
-                }
+                    evalState,
+                    ReplCodeLine(lineNumber.getAndIncrement(), 0, fullText),
+                    null,
+                    object : InvokeWrapper {
+                        override fun <T> invoke(body: () -> T): T = replConfiguration.executionInterceptor.execute(body)
+                    }
             )
 
             when {

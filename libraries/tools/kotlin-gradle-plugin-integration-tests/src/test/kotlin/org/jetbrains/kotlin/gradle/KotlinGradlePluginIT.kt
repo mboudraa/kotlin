@@ -82,7 +82,7 @@ class KotlinGradleIT : BaseGradleIT() {
     fun testKotlinOnlyCompile() {
         val project = Project("kotlinProject")
 
-        project.build("build") {
+        project.debug("build") {
             assertSuccessful()
             assertFileExists(kotlinClassesDir() + "META-INF/kotlinProject.kotlin_module")
             assertReportExists()
@@ -90,7 +90,7 @@ class KotlinGradleIT : BaseGradleIT() {
             assertNotContains("Forcing System.gc")
         }
 
-        project.build("build") {
+        project.debug("build") {
             assertSuccessful()
             assertTasksUpToDate(":compileKotlin", ":compileTestKotlin")
         }

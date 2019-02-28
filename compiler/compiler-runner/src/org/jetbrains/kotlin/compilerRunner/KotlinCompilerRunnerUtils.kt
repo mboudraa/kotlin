@@ -19,14 +19,19 @@ package org.jetbrains.kotlin.compilerRunner
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.daemon.client.CompileServiceSession
-import org.jetbrains.kotlin.daemon.client.DaemonReportMessage
-import org.jetbrains.kotlin.daemon.client.DaemonReportingTargets
-import org.jetbrains.kotlin.daemon.client.KotlinCompilerClient
+import org.jetbrains.kotlin.daemon.client.*
 import org.jetbrains.kotlin.daemon.common.*
+import org.jetbrains.kotlin.daemon.common.DaemonReportCategory
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.daemon.common.DummyProfiler
+import org.jetbrains.kotlin.daemon.common.Profiler
+import org.jetbrains.kotlin.daemon.common.WallAndThreadAndMemoryTotalProfiler
+import org.jetbrains.kotlin.daemon.common.impls.DummyProfilerAsync
+import org.jetbrains.kotlin.daemon.common.impls.ProfilerAsync
+import org.jetbrains.kotlin.daemon.common.impls.WallAndThreadAndMemoryTotalProfilerAsync
 
 object KotlinCompilerRunnerUtils {
     fun exitCodeFromProcessExitCode(log: KotlinLogger, code: Int): ExitCode {
@@ -58,19 +63,23 @@ object KotlinCompilerRunnerUtils {
         val daemonReportMessages = ArrayList<DaemonReportMessage>()
         val daemonReportingTargets = DaemonReportingTargets(messages = daemonReportMessages)
 
-        val profiler = if (daemonOptions.reportPerf) WallAndThreadAndMemoryTotalProfiler(withGC = false) else DummyProfiler()
+        val profiler = if (daemonOptions.reportPerf) WallAndThreadAndMemoryTotalProfilerAsync(withGC = false) else DummyProfilerAsync()
 
-        val connection = profiler.withMeasure(null) {
-            KotlinCompilerClient.connectAndLease(
-                compilerId,
-                clientAliveFlagFile,
-                daemonJVMOptions,
-                daemonOptions,
-                daemonReportingTargets,
-                autostart = true,
-                leaseSession = true,
-                sessionAliveFlagFile = sessionAliveFlagFile
-            )
+        val kotlinCompilerClient = KotlinCompilerDaemonClient.instantiate(Version.RMI)
+
+        val connection = runBlocking {
+            profiler.withMeasure(null) {
+                kotlinCompilerClient.connectAndLease(
+                        compilerId,
+                        clientAliveFlagFile,
+                        daemonJVMOptions,
+                        daemonOptions,
+                        daemonReportingTargets,
+                        autostart = true,
+                        leaseSession = true,
+                        sessionAliveFlagFile = sessionAliveFlagFile
+                )
+            }
         }
 
         if (connection == null || isDebugEnabled) {
@@ -85,7 +94,7 @@ object KotlinCompilerRunnerUtils {
         }
 
         fun reportTotalAndThreadPerf(
-            message: String, daemonOptions: DaemonOptions, messageCollector: MessageCollector, profiler: Profiler
+            message: String, daemonOptions: DaemonOptions, messageCollector: MessageCollector, profiler: ProfilerAsync
         ) {
             if (daemonOptions.reportPerf) {
                 fun Long.ms() = TimeUnit.NANOSECONDS.toMillis(this)
@@ -97,7 +106,7 @@ object KotlinCompilerRunnerUtils {
         }
 
         reportTotalAndThreadPerf("Daemon connect", daemonOptions, MessageCollector.NONE, profiler)
-        return connection
+        return connection?.toRMI()
     }
 }
 

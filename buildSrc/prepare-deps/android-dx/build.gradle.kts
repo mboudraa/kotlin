@@ -93,21 +93,21 @@ val prepareIvyXml by tasks.creating {
             addConfiguration(DefaultIvyConfiguration("default"))
             addConfiguration(DefaultIvyConfiguration("sources"))
             addArtifact(
-                FileBasedIvyArtifact(
-                    File(dxRepoModuleDir, "dx.jar"),
-                    DefaultIvyPublicationIdentity(customDepsOrg, "dx", dxRevision)
-                ).also {
-                    it.conf = "default"
-                })
+                    FileBasedIvyArtifact(
+                            File(dxRepoModuleDir, "dx.jar"),
+                            DefaultIvyPublicationIdentity(customDepsOrg, "dx", dxRevision)
+                    ).also {
+                        it.conf = "default"
+                    })
 
             addArtifact(
-                FileBasedIvyArtifact(
-                    File(dxRepoModuleDir, "dx-sources.jar"),
-                    DefaultIvyPublicationIdentity(customDepsOrg, "dx", dxRevision)
-                ).also {
-                    it.conf = "sources"
-                    it.classifier = "sources"
-                })
+                    FileBasedIvyArtifact(
+                            File(dxRepoModuleDir, "dx-sources.jar"),
+                            DefaultIvyPublicationIdentity(customDepsOrg, "dx", dxRevision)
+                    ).also {
+                        it.conf = "sources"
+                        it.classifier = "sources"
+                    })
 
             writeTo(ivyFile)
         }

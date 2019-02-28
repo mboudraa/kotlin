@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import java.io.File
 
 class RemoteExpectActualTracker(
-    val facade: CompilerCallbackServicesFacade,
-    val profiler: Profiler = DummyProfiler()
+        val facade: CompilerCallbackServicesFacade,
+        val profiler: Profiler = DummyProfiler()
 ): ExpectActualTracker {
     override fun report(expectedFile: File, actualFile: File) {
         profiler.withMeasure(this) {

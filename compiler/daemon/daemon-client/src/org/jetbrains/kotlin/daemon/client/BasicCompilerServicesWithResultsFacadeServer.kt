@@ -31,7 +31,7 @@ open class BasicCompilerServicesWithResultsFacadeServer(
         val outputsCollector: ((File, List<File>) -> Unit)? = null,
         port: Int = SOCKET_ANY_FREE_PORT
 ) : CompilerServicesFacadeBase,
-    UnicastRemoteObject(port, LoopbackNetworkInterface.clientLoopbackSocketFactory, LoopbackNetworkInterface.serverLoopbackSocketFactory)
+        UnicastRemoteObject(port, LoopbackNetworkInterface.clientLoopbackSocketFactory, LoopbackNetworkInterface.serverLoopbackSocketFactory)
 {
     override fun report(category: Int, severity: Int, message: String?, attachment: Serializable?) {
         messageCollector.reportFromDaemon(outputsCollector, category, severity, message, attachment)

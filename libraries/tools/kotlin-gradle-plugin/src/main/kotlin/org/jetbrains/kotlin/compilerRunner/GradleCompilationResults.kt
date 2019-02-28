@@ -1,10 +1,10 @@
 package org.jetbrains.kotlin.compilerRunner
 
+import org.jetbrains.kotlin.daemon.common.CompileIterationResult
 import org.jetbrains.kotlin.daemon.common.CompilationResultCategory
 import org.jetbrains.kotlin.daemon.common.CompilationResults
 import org.jetbrains.kotlin.daemon.common.LoopbackNetworkInterface
 import org.jetbrains.kotlin.daemon.common.SOCKET_ANY_FREE_PORT
-import org.jetbrains.kotlin.daemon.common.CompileIterationResult
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
 import org.jetbrains.kotlin.gradle.utils.pathsAsStringRelativeTo
 import java.io.File
@@ -17,9 +17,9 @@ internal class GradleCompilationResults(
     private val projectRootFile: File
 ) : CompilationResults,
     UnicastRemoteObject(
-        SOCKET_ANY_FREE_PORT,
-        LoopbackNetworkInterface.clientLoopbackSocketFactory,
-        LoopbackNetworkInterface.serverLoopbackSocketFactory
+            SOCKET_ANY_FREE_PORT,
+            LoopbackNetworkInterface.clientLoopbackSocketFactory,
+            LoopbackNetworkInterface.serverLoopbackSocketFactory
     ) {
 
     var icLogLines: List<String>? = null

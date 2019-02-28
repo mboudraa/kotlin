@@ -50,6 +50,7 @@ messages/**)
 -dontwarn org.jetbrains.annotations.ReadOnly
 -dontwarn org.jetbrains.annotations.Mutable
 -dontwarn com.intellij.util.io.TarUtil
+-dontwarn org.slf4j.**
 
 # Annotations from intellijCore/annotations.jar that not presented in org.jetbrains.annotations
 -dontwarn org.jetbrains.annotations.Async*

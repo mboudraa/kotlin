@@ -50,13 +50,13 @@ object KotlinCompilerClient {
     val verboseReporting = System.getProperty(COMPILE_DAEMON_VERBOSE_REPORT_PROPERTY) != null
 
     fun getOrCreateClientFlagFile(daemonOptions: DaemonOptions): File =
-            // for jps property is passed from IDEA to JPS in KotlinBuildProcessParametersProvider
+    // for jps property is passed from IDEA to JPS in KotlinBuildProcessParametersProvider
             System.getProperty(COMPILE_DAEMON_CLIENT_ALIVE_PATH_PROPERTY)
-                ?.let(String::trimQuotes)
-                ?.takeUnless(String::isBlank)
-                ?.let(::File)
-                ?.takeIf(File::exists)
-                ?: makeAutodeletingFlagFile(baseDir = File(daemonOptions.runFilesPathOrDefault))
+                    ?.let(String::trimQuotes)
+                    ?.takeUnless(String::isBlank)
+                    ?.let(::File)
+                    ?.takeIf(File::exists)
+                    ?: makeAutodeletingFlagFile(baseDir = File(daemonOptions.runFilesPathOrDefault))
 
     fun connectToCompileService(compilerId: CompilerId,
                                 daemonJVMOptions: DaemonJVMOptions,
@@ -168,18 +168,18 @@ object KotlinCompilerClient {
                            profiler: Profiler = DummyProfiler(),
                            operationsTracer: RemoteOperationsTracer? = null
     ): Int = profiler.withMeasure(this) {
-            compileService.remoteIncrementalCompile(
-                    sessionId,
-                    targetPlatform,
-                    args,
-                    CompilerCallbackServicesFacadeServer(incrementalCompilationComponents = callbackServices.incrementalCompilationComponents,
-                                                         lookupTracker = callbackServices.lookupTracker,
-                                                         compilationCanceledStatus = callbackServices.compilationCanceledStatus,
-                                                         port = port),
-                    RemoteOutputStreamServer(compilerOut, port),
-                    CompileService.OutputFormat.XML,
-                    RemoteOutputStreamServer(daemonOut, port),
-                    operationsTracer).get()
+        compileService.remoteIncrementalCompile(
+                sessionId,
+                targetPlatform,
+                args,
+                CompilerCallbackServicesFacadeServer(incrementalCompilationComponents = callbackServices.incrementalCompilationComponents,
+                                                     lookupTracker = callbackServices.lookupTracker,
+                                                     compilationCanceledStatus = callbackServices.compilationCanceledStatus,
+                                                     port = port),
+                RemoteOutputStreamServer(compilerOut, port),
+                CompileService.OutputFormat.XML,
+                RemoteOutputStreamServer(daemonOut, port),
+                operationsTracer).get()
     }
 
     fun compile(compilerService: CompileService,
@@ -222,7 +222,7 @@ object KotlinCompilerClient {
             if (unrecognized.any())
                 throw IllegalArgumentException(
                         "Unrecognized client options passed via property $COMPILE_DAEMON_OPTIONS_PROPERTY: " + unrecognized.joinToString(" ") +
-                        "\nSupported options: " + opts.mappers.joinToString(", ", transform = { it.names.first() }))
+                                "\nSupported options: " + opts.mappers.joinToString(", ", transform = { it.names.first() }))
         }
         return opts
     }
@@ -296,15 +296,15 @@ object KotlinCompilerClient {
 
     fun detectCompilerClasspath(): List<String>? =
             System.getProperty("java.class.path")
-            ?.split(File.pathSeparator)
-            ?.map { File(it).parentFile }
-            ?.distinct()
-            ?.mapNotNull {
-                it?.walk()
-                        ?.firstOrNull { it.name.equals(COMPILER_JAR_NAME, ignoreCase = true) }
-            }
-            ?.firstOrNull()
-            ?.let { listOf(it.absolutePath) }
+                    ?.split(File.pathSeparator)
+                    ?.map { File(it).parentFile }
+                    ?.distinct()
+                    ?.mapNotNull {
+                        it?.walk()
+                                ?.firstOrNull { it.name.equals(COMPILER_JAR_NAME, ignoreCase = true) }
+                    }
+                    ?.firstOrNull()
+                    ?.let { listOf(it.absolutePath) }
 
     // --- Implementation ---------------------------------------
 
@@ -327,7 +327,7 @@ object KotlinCompilerClient {
                 if (err != null) {
                     reportingTargets.report(DaemonReportCategory.INFO,
                                             (if (attempts >= DAEMON_CONNECT_CYCLE_ATTEMPTS || !autostart) "no more retries on: " else "retrying($attempts) on: ")
-                                            + err.toString())
+                                                    + err.toString())
                 }
 
                 if (attempts++ > DAEMON_CONNECT_CYCLE_ATTEMPTS || !autostart) {
@@ -355,10 +355,10 @@ object KotlinCompilerClient {
         val optsCopy = daemonJVMOptions.copy()
         // if required options fit into fattest running daemon - return the daemon and required options with memory params set to actual ones in the daemon
         return aliveWithMetadata.maxWith(comparator)?.takeIf { daemonJVMOptions memorywiseFitsInto it.jvmOptions }?.let {
-                Pair(it.daemon, optsCopy.updateMemoryUpperBounds(it.jvmOptions))
-            }
-            // else combine all options from running daemon to get fattest option for a new daemon to run
-            ?: Pair(null, aliveWithMetadata.fold(optsCopy, { opts, d -> opts.updateMemoryUpperBounds(d.jvmOptions) }))
+            Pair(it.daemon, optsCopy.updateMemoryUpperBounds(it.jvmOptions))
+        }
+        // else combine all options from running daemon to get fattest option for a new daemon to run
+                ?: Pair(null, aliveWithMetadata.fold(optsCopy, { opts, d -> opts.updateMemoryUpperBounds(d.jvmOptions) }))
     }
 
 
@@ -370,12 +370,12 @@ object KotlinCompilerClient {
                 "-Djava.awt.headless=true",
                 "-D$JAVA_RMI_SERVER_HOSTNAME=$serverHostname")
         val args = listOf(
-                   javaExecutable.absolutePath, "-cp", compilerId.compilerClasspath.joinToString(File.pathSeparator)) +
-                   platformSpecificOptions +
-                   daemonJVMOptions.mappers.flatMap { it.toArgs("-") } +
-                   COMPILER_DAEMON_CLASS_FQN +
-                   daemonOptions.mappers.flatMap { it.toArgs(COMPILE_DAEMON_CMDLINE_OPTIONS_PREFIX) } +
-                   compilerId.mappers.flatMap { it.toArgs(COMPILE_DAEMON_CMDLINE_OPTIONS_PREFIX) }
+                javaExecutable.absolutePath, "-cp", compilerId.compilerClasspath.joinToString(File.pathSeparator)) +
+                platformSpecificOptions +
+                daemonJVMOptions.mappers.flatMap { it.toArgs("-") } +
+                COMPILER_DAEMON_CLASS_FQN +
+                daemonOptions.mappers.flatMap { it.toArgs(COMPILE_DAEMON_CMDLINE_OPTIONS_PREFIX) } +
+                compilerId.mappers.flatMap { it.toArgs(COMPILE_DAEMON_CMDLINE_OPTIONS_PREFIX) }
         reportingTargets.report(DaemonReportCategory.DEBUG, "starting the daemon as: " + args.joinToString(" "))
         val processBuilder = ProcessBuilder(args)
         processBuilder.redirectErrorStream(true)

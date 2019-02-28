@@ -38,16 +38,16 @@ import kotlin.concurrent.write
 // WARNING: not thread safe, assuming external synchronization
 
 open class GenericReplCompiler(
-    disposable: Disposable,
-    scriptDefinition: KotlinScriptDefinition,
-    private val compilerConfiguration: CompilerConfiguration,
-    messageCollector: MessageCollector
+        disposable: Disposable,
+        scriptDefinition: KotlinScriptDefinition,
+        private val compilerConfiguration: CompilerConfiguration,
+        messageCollector: MessageCollector
 ) : ReplCompiler {
 
     constructor(
-        scriptDefinition: KotlinScriptDefinition,
-        compilerConfiguration: CompilerConfiguration,
-        messageCollector: MessageCollector
+            scriptDefinition: KotlinScriptDefinition,
+            compilerConfiguration: CompilerConfiguration,
+            messageCollector: MessageCollector
     ) : this(Disposer.newDisposable(), scriptDefinition, compilerConfiguration, messageCollector)
 
     private val checker = GenericReplChecker(disposable, scriptDefinition, compilerConfiguration, messageCollector)
@@ -91,12 +91,12 @@ open class GenericReplCompiler(
             val type = (scriptDescriptor as ScriptDescriptor).resultValue?.returnType
 
             val generationState = GenerationState.Builder(
-                psiFile.project,
-                ClassBuilderFactories.BINARIES,
-                compilerState.analyzerEngine.module,
-                compilerState.analyzerEngine.trace.bindingContext,
-                listOf(psiFile),
-                compilerConfiguration
+                    psiFile.project,
+                    ClassBuilderFactories.BINARIES,
+                    compilerState.analyzerEngine.module,
+                    compilerState.analyzerEngine.trace.bindingContext,
+                    listOf(psiFile),
+                    compilerConfiguration
             ).build()
 
             generationState.replSpecific.resultType = type
@@ -104,10 +104,10 @@ open class GenericReplCompiler(
             generationState.replSpecific.earlierScriptsForReplInterpreter = compilerState.history.map { it.item }
             generationState.beforeCompile()
             KotlinCodegenFacade.generatePackage(
-                generationState,
-                psiFile.script!!.containingKtFile.packageFqName,
-                setOf(psiFile.script!!.containingKtFile),
-                CompilationErrorHandler.THROW_EXCEPTION
+                    generationState,
+                    psiFile.script!!.containingKtFile.packageFqName,
+                    setOf(psiFile.script!!.containingKtFile),
+                    CompilationErrorHandler.THROW_EXCEPTION
             )
 
             val generatedClassname = makeScriptBaseName(codeLine)
@@ -116,15 +116,15 @@ open class GenericReplCompiler(
             val classes = generationState.factory.asList().map { CompiledClassData(it.relativePath, it.asByteArray()) }
 
             return ReplCompileResult.CompiledClasses(
-                LineId(codeLine),
-                compilerState.history.map { it.id },
-                generatedClassname,
-                classes,
-                generationState.replSpecific.hasResult,
-                classpathAddendum ?: emptyList(),
-                generationState.replSpecific.resultType?.let {
-                    DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(it)
-                }
+                    LineId(codeLine),
+                    compilerState.history.map { it.id },
+                    generatedClassname,
+                    classes,
+                    generationState.replSpecific.hasResult,
+                    classpathAddendum ?: emptyList(),
+                    generationState.replSpecific.resultType?.let {
+                        DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(it)
+                    }
             )
         }
     }

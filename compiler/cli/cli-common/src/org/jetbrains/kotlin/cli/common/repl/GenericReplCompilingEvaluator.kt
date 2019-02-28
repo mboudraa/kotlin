@@ -101,4 +101,4 @@ private fun AggregatedReplStageState<*, *>.adjustHistories(): Iterable<ILineId>?
         state2.history.peek()?.let {
             state1.history.resetTo(it.id)
         }
-        ?: state1.history.reset()
+                ?: state1.history.reset()

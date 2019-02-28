@@ -9,9 +9,9 @@ import java.io.File
 import java.io.Serializable
 
 class CompileIterationResult(
-    @Suppress("unused") // used in Gradle
+        @Suppress("unused") // used in Gradle
         val sourceFiles: Iterable<File>,
-    @Suppress("unused") // used in Gradle
+        @Suppress("unused") // used in Gradle
         val exitCode: String
 ) : Serializable {
     companion object {

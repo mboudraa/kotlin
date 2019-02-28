@@ -16,19 +16,26 @@
 
 package org.jetbrains.kotlin.compiler.client
 
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
-import java.io.FileNotFoundException
-import kotlin.test.assertEquals
-import org.jetbrains.kotlin.daemon.client.*
-import org.jetbrains.kotlin.daemon.common.*
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.daemon.client.DaemonReportMessage
+import org.jetbrains.kotlin.daemon.client.DaemonReportingTargets
+import org.jetbrains.kotlin.daemon.client.KotlinCompilerDaemonClient
+import org.jetbrains.kotlin.daemon.common.CompileService
+import org.jetbrains.kotlin.daemon.common.CompilerId
+import org.jetbrains.kotlin.daemon.common.DaemonOptions
+import org.jetbrains.kotlin.daemon.common.Version
+import org.jetbrains.kotlin.daemon.common.ReportSeverity
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileNotFoundException
 import java.io.PrintStream
+import kotlin.test.assertEquals
+import kotlinx.coroutines.runBlocking
 
 
 class CompilerClientIT {
@@ -58,15 +65,19 @@ class CompilerClientIT {
                     throw FileNotFoundException("cannot find $defaultPath ($this)")
             }
 
+    private val kotlinCompilerClient = KotlinCompilerDaemonClient.instantiate(Version.RMI)
+
     private val compilerService: CompileService by lazy {
         val compilerId = CompilerId.makeCompilerId(compilerClasspath)
         val daemonOptions = DaemonOptions(runFilesPath = File(workingDir.root, "daemonRunPath").absolutePath, verbose = true, reportPerf = true)
         val daemonJVMOptions = org.jetbrains.kotlin.daemon.common.DaemonJVMOptions()
         val daemonReportMessages = arrayListOf<DaemonReportMessage>()
 
-        KotlinCompilerClient.connectToCompileService(compilerId, clientAliveFile, daemonJVMOptions, daemonOptions,
-                DaemonReportingTargets(messages = daemonReportMessages), true)
-                ?: throw IllegalStateException("Unable to connect to compiler daemon:" + daemonReportMessages.joinToString("\n  ", prefix = "\n  ") { "${it.category.name} ${it.message}" })
+        runBlocking {
+            kotlinCompilerClient.connectToCompileService(compilerId, clientAliveFile, daemonJVMOptions, daemonOptions,
+                                                         DaemonReportingTargets(messages = daemonReportMessages), true)
+                    ?: throw IllegalStateException("Unable to connect to compiler daemon:" + daemonReportMessages.joinToString("\n  ", prefix = "\n  ") { "${it.category.name} ${it.message}" })
+        }
     }
 
     private val myMessageCollector = TestMessageCollector()
@@ -84,8 +95,10 @@ class CompilerClientIT {
         var code = -1
         myMessageCollector.clear()
         val out = captureOutAndErr {
-            code = KotlinCompilerClient.compile(compilerService, CompileService.NO_SESSION, CompileService.TargetPlatform.JVM, args, myMessageCollector,
-                    reportSeverity = ReportSeverity.DEBUG)
+            code = runBlocking {
+                kotlinCompilerClient.compile(compilerService, CompileService.NO_SESSION, CompileService.TargetPlatform.JVM, args, myMessageCollector,
+                                             reportSeverity = ReportSeverity.DEBUG)
+            }
         }
         return myMessageCollector.messages.joinToString("\n") { it.message } + "\n" + out to code
     }
@@ -99,8 +112,7 @@ internal fun captureOutAndErr(body: () -> Unit): String {
     System.setErr(PrintStream(outStream))
     try {
         body()
-    }
-    finally {
+    } finally {
         System.out.flush()
         System.setOut(prevOut)
         System.err.flush()

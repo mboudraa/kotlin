@@ -21,7 +21,7 @@ internal open class GradleCompilerServicesFacadeImpl(
     private val compilerMessageCollector: GradleBufferingMessageCollector,
     port: Int = SOCKET_ANY_FREE_PORT
 ) : UnicastRemoteObject(port, LoopbackNetworkInterface.clientLoopbackSocketFactory, LoopbackNetworkInterface.serverLoopbackSocketFactory),
-    CompilerServicesFacadeBase,
+        CompilerServicesFacadeBase,
     Remote {
 
     override fun report(category: Int, severity: Int, message: String?, attachment: Serializable?) {
@@ -50,4 +50,4 @@ internal class GradleIncrementalCompilerServicesFacadeImpl(
     messageCollector: GradleBufferingMessageCollector,
     port: Int = SOCKET_ANY_FREE_PORT
 ) : GradleCompilerServicesFacadeImpl(log, messageCollector, port),
-    IncrementalCompilerServicesFacade
+        IncrementalCompilerServicesFacade

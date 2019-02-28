@@ -24,8 +24,8 @@ import java.rmi.server.UnicastRemoteObject
 
 
 class RemoteInputStreamServer(val `in`: InputStream, port: Int = SOCKET_ANY_FREE_PORT)
-: RemoteInputStream,
-  UnicastRemoteObject(port, LoopbackNetworkInterface.clientLoopbackSocketFactory, LoopbackNetworkInterface.serverLoopbackSocketFactory)
+    : RemoteInputStream,
+        UnicastRemoteObject(port, LoopbackNetworkInterface.clientLoopbackSocketFactory, LoopbackNetworkInterface.serverLoopbackSocketFactory)
 {
     override fun close() {
         `in`.close()
@@ -35,7 +35,7 @@ class RemoteInputStreamServer(val `in`: InputStream, port: Int = SOCKET_ANY_FREE
         val buf = ByteArray(length)
         val readBytes = `in`.read(buf, 0, length)
         return if (readBytes == length) buf
-               else buf.copyOfRange(0, readBytes)
+        else buf.copyOfRange(0, readBytes)
     }
 
     override fun read(): Int =

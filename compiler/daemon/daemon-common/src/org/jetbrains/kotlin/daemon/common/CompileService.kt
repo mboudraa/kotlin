@@ -142,8 +142,8 @@ interface CompileService : Remote {
 
     @Throws(RemoteException::class)
     fun classesFqNamesByFiles(
-        sessionId: Int,
-        sourceFiles: Set<File>
+            sessionId: Int,
+            sourceFiles: Set<File>
     ): CallResult<Set<String>>
 
     @Throws(RemoteException::class)

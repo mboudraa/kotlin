@@ -25,8 +25,8 @@ import java.rmi.server.UnicastRemoteObject
 
 
 class RemoteOutputStreamServer(val out: OutputStream, port: Int = SOCKET_ANY_FREE_PORT)
-: RemoteOutputStream,
-  UnicastRemoteObject(port, LoopbackNetworkInterface.clientLoopbackSocketFactory, LoopbackNetworkInterface.serverLoopbackSocketFactory)
+    : RemoteOutputStream,
+        UnicastRemoteObject(port, LoopbackNetworkInterface.clientLoopbackSocketFactory, LoopbackNetworkInterface.serverLoopbackSocketFactory)
 {
     override fun close() {
         out.close()

@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
+ * that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.daemon.common
@@ -24,6 +13,7 @@ import java.rmi.registry.LocateRegistry
 import java.rmi.registry.Registry
 import java.rmi.server.RMIClientSocketFactory
 import java.rmi.server.RMIServerSocketFactory
+import java.security.*
 import java.util.*
 
 
@@ -37,6 +27,32 @@ const val DEFAULT_SOCKET_CONNECT_ATTEMPTS = 3
 const val DEFAULT_SOCKET_CONNECT_INTERVAL_MS = 10L
 
 object LoopbackNetworkInterface {
+
+
+    init {
+         val keyGen = KeyPairGenerator.getInstance("DSA",
+            "SUN");
+        val random = SecureRandom.getInstance("SHA1PRNG",
+                                              "SUN");
+
+        keyGen.initialize(1024, random);
+
+        val pair = keyGen.generateKeyPair();
+        val priv = pair.getPrivate();
+        val pub = pair.getPublic();
+
+        /*
+         * Create a Signature object and initialize it with the private
+         * key
+         */
+
+        val dsa = Signature.getInstance("SHA1withDSA", "SUN");
+
+        dsa.toString()
+
+        dsa.initSign(priv);
+
+    }
 
     const val IPV4_LOOPBACK_INET_ADDRESS = "127.0.0.1"
     const val IPV6_LOOPBACK_INET_ADDRESS = "::1"
@@ -70,7 +86,8 @@ object LoopbackNetworkInterface {
         override fun hashCode(): Int = super.hashCode()
 
         @Throws(IOException::class)
-        override fun createServerSocket(port: Int): ServerSocket = ServerSocket(port, SERVER_SOCKET_BACKLOG_SIZE, InetAddress.getByName(null))
+        override fun createServerSocket(port: Int): ServerSocket = ServerSocket(port,
+                                                                                SERVER_SOCKET_BACKLOG_SIZE, InetAddress.getByName(null))
     }
 
 
@@ -104,14 +121,17 @@ fun findPortAndCreateRegistry(attempts: Int, portRangeStart: Int, portRangeEnd: 
     while (i++ < attempts) {
         val port = portSelectionRng.nextInt(portRangeEnd - portRangeStart) + portRangeStart
         try {
-            return Pair(LocateRegistry.createRegistry(port, LoopbackNetworkInterface.clientLoopbackSocketFactory, LoopbackNetworkInterface.serverLoopbackSocketFactory), port)
+            return Pair(LocateRegistry.createRegistry(port,
+                                                      LoopbackNetworkInterface.clientLoopbackSocketFactory,
+                                                      LoopbackNetworkInterface.serverLoopbackSocketFactory
+            ), port)
         }
         catch (e: RemoteException) {
-            // assuming that the port is already taken
+            // assuming that the socketPort is already taken
             lastException = e
         }
     }
-    throw IllegalStateException("Cannot find free port in $attempts attempts", lastException)
+    throw IllegalStateException("Cannot find free socketPort in $attempts attempts", lastException)
 }
 
 /**
@@ -120,6 +140,9 @@ fun findPortAndCreateRegistry(attempts: Int, portRangeStart: Int, portRangeEnd: 
  */
 fun ensureServerHostnameIsSetUp() {
     if (System.getProperty(JAVA_RMI_SERVER_HOSTNAME) == null) {
-        System.setProperty(JAVA_RMI_SERVER_HOSTNAME, LoopbackNetworkInterface.loopbackInetAddressName)
+        System.setProperty(
+                JAVA_RMI_SERVER_HOSTNAME,
+                LoopbackNetworkInterface.loopbackInetAddressName
+        )
     }
 }

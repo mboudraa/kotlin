@@ -68,7 +68,7 @@ open class KotlinJvmReplService(
             val cls = classloader.loadClass(templateClassName)
             val def = KotlinScriptDefinitionFromAnnotatedTemplate(cls.kotlin, emptyMap())
             messageCollector.report(INFO, "New script definition $templateClassName: files pattern = \"${def.scriptFilePattern}\", " +
-                                          "resolver = ${def.dependencyResolver.javaClass.name}")
+                    "resolver = ${def.dependencyResolver.javaClass.name}")
             return def
         }
         catch (ex: ClassNotFoundException) {
@@ -134,7 +134,7 @@ open class KotlinJvmReplService(
         states.keys.firstOrNull { it.getId() == stateId }?.let {
             CompileService.CallResult.Good(body(it.state))
         }
-        ?: CompileService.CallResult.Error("No REPL state with id $stateId found")
+                ?: CompileService.CallResult.Error("No REPL state with id $stateId found")
     }
 }
 
@@ -186,8 +186,8 @@ private fun CompilerConfiguration.configureScripting() {
     }
     if (error != null) {
         throw IllegalStateException(
-            "Unable to use scripting/REPL in the daemon, no kotlin-scripting-compiler.jar or its dependencies are found in the compiler classpath",
-            error
+                "Unable to use scripting/REPL in the daemon, no kotlin-scripting-compiler.jar or its dependencies are found in the compiler classpath",
+                error
         )
     }
 }

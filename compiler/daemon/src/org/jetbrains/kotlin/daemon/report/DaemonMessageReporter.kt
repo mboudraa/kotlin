@@ -17,6 +17,9 @@
 package org.jetbrains.kotlin.daemon.report
 
 import org.jetbrains.kotlin.daemon.common.*
+import org.jetbrains.kotlin.daemon.common.CompilerServicesFacadeBase
+import org.jetbrains.kotlin.daemon.common.ReportCategory
+import org.jetbrains.kotlin.daemon.common.ReportSeverity
 import java.io.PrintStream
 
 internal interface DaemonMessageReporter {

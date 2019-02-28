@@ -40,7 +40,7 @@ val COMPILE_DAEMON_REPORT_PERF_PROPERTY: String = "kotlin.daemon.perf"
 val COMPILE_DAEMON_VERBOSE_REPORT_PROPERTY: String = "kotlin.daemon.verbose"
 val COMPILE_DAEMON_CMDLINE_OPTIONS_PREFIX: String = "--daemon-"
 val COMPILE_DAEMON_STARTUP_TIMEOUT_PROPERTY: String = "kotlin.daemon.startup.timeout"
-val COMPILE_DAEMON_DEFAULT_FILES_PREFIX: String = "kotlin-daemon"
+val COMPILE_DAEMON_DEFAULT_FILES_PREFIX: String = "kotlin-daemon-EXP"
 val COMPILE_DAEMON_TIMEOUT_INFINITE_S: Int = 0
 val COMPILE_DAEMON_DEFAULT_IDLE_TIMEOUT_S: Int = 7200 // 2 hours
 val COMPILE_DAEMON_DEFAULT_UNUSED_TIMEOUT_S: Int = 60
@@ -50,7 +50,7 @@ val COMPILE_DAEMON_FORCE_SHUTDOWN_DEFAULT_TIMEOUT_MS: Long = 10000L // 10 secs
 val COMPILE_DAEMON_TIMEOUT_INFINITE_MS: Long = 0L
 val COMPILE_DAEMON_IS_READY_MESSAGE = "Kotlin compile daemon is ready"
 
-val COMPILE_DAEMON_CUSTOM_RUN_FILES_PATH_FOR_TESTS: String = "kotlin.daemon.custom.run.files.path.for.tests"
+val COMPILE_DAEMON_CUSTOM_RUN_FILES_PATH_FOR_TESTS: String = "kotlin.daemon.custom.runServer.files.path.for.tests"
 val COMPILE_DAEMON_DEFAULT_RUN_DIR_PATH: String get() =
     System.getProperty(COMPILE_DAEMON_CUSTOM_RUN_FILES_PATH_FOR_TESTS)
         ?: FileSystem.getRuntimeStateFilesPath("kotlin", "daemon")
