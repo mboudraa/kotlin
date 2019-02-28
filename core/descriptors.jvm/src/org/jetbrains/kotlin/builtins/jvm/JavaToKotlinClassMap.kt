@@ -215,7 +215,7 @@ object JavaToKotlinClassMap : PlatformToKotlinClassMap {
 
     fun mutableToReadOnly(fqNameUnsafe: FqNameUnsafe?): FqName? = mutableToReadOnly[fqNameUnsafe]
 
-    fun readOnlyToMutable(fqNameUnsafe: FqNameUnsafe?): FqName? = mutableToReadOnly[fqNameUnsafe]
+    fun readOnlyToMutable(fqNameUnsafe: FqNameUnsafe?): FqName? = readOnlyToMutable[fqNameUnsafe]
 
     fun isMutable(fqNameUnsafe: FqNameUnsafe?): Boolean = mutableToReadOnly.containsKey(fqNameUnsafe)
 
